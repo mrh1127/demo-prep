@@ -6,7 +6,7 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -15,23 +15,23 @@ body {
 }
 
 .calculator {
-  background: #ffffff;
+  background: #000000;
   border-radius: 24px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
   padding: 24px;
   max-width: 400px;
   width: 100%;
 }
 
 .display {
-  background: #f8f9fa;
+  background: #1a1a1a;
   border-radius: 16px;
   padding: 32px 24px;
   margin-bottom: 20px;
   text-align: right;
   font-size: 48px;
   font-weight: 300;
-  color: #2d3748;
+  color: #ffffff;
   min-height: 100px;
   display: flex;
   align-items: center;
@@ -48,7 +48,7 @@ body {
 }
 
 .btn {
-  background: #f8f9fa;
+  background: #333333;
   border: none;
   border-radius: 12px;
   font-size: 24px;
@@ -56,28 +56,28 @@ body {
   cursor: pointer;
   transition: all 0.15s ease;
   font-weight: 500;
-  color: #2d3748;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .btn:hover {
-  background: #e9ecef;
+  background: #444444;
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
 .btn:active {
   transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .btn-function {
-  background: #e9ecef;
-  color: #495057;
+  background: #2a2a2a;
+  color: #ffffff;
 }
 
 .btn-function:hover {
-  background: #dee2e6;
+  background: #3a3a3a;
 }
 
 .btn-operator {
