@@ -1,55 +1,82 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy Node.js app to Azure Web App - demo-prep
-
+name: Azure Static Web App CI/CD
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
-
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read #This is required for actions/checkout
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node.js version
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20.x'
-
-      - name: npm install, build, and test
-        run: |
-          npm install
-          npm run build --if-present
-          npm run test --if-present
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: node-app
-          path: .
-
   deploy:
     runs-on: ubuntu-latest
-    needs: build
-    
     steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: node-app
+      # Step 1: Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v3
       
-      - name: 'Deploy to Azure Web App'
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3
+      # Step 2: Login to Azure using JSON secret
+      - name: Azure Login
+        uses: azure/login@v1
         with:
-          app-name: 'demo-prep'
-          slot-name: 'Production'
-          package: .
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_C7A6794050694E97A6AAFF0255051E4E }}
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      # Step 3: Ensure Resource Group Exists (don't fail if exists)
+      - name: Ensure Resource Group Exists
+        run: |
+          az group create --name my-static-webapp-rg-1 --location "East US" || true
+      
+      # Step 4: Install/update Azure Static Web Apps CLI extension
+      - name: Install/update Static Web Apps CLI extension
+        run: |
+          az extension add --name staticwebapp --upgrade
+      
+      # Step 5: Create Static Web App if it doesn't exist
+      - name: Ensure Static Web App Exists
+        id: swa
+        run: |
+          APP_NAME="my-static-webapp-demo"
+          RG_NAME="my-static-webapp-rg-1"
+          EXISTS=$(az staticwebapp show --name $APP_NAME --resource-group $RG_NAME --query "name" -o tsv 2>/dev/null || echo "")
+          if [ -z "$EXISTS" ]; then
+            echo "Static Web App does not exist. Creating..."
+            az staticwebapp create \
+              --name $APP_NAME \
+              --resource-group $RG_NAME \
+              --location "East US 2" \
+              --sku Free
+          else
+            echo "Static Web App already exists. Skipping creation."
+          fi
+          echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
+          echo "RG_NAME=$RG_NAME" >> $GITHUB_ENV
+      
+      # Step 6: Get deployment token dynamically
+      - name: Get Deployment Token
+        id: get_token
+        run: |
+          DEPLOY_TOKEN=$(az staticwebapp secrets list \
+            --name ${{ env.APP_NAME }} \
+            --resource-group ${{ env.RG_NAME }} \
+            --query "properties.apiKey" -o tsv)
+          echo "DEPLOY_TOKEN=$DEPLOY_TOKEN" >> $GITHUB_OUTPUT
+          echo "::add-mask::$DEPLOY_TOKEN"
+      
+      # Step 7: Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      # Step 8: Build App (React example)
+      - name: Build App
+        run: |
+          npm ci
+          npm run build
+      
+      # Step 9: Deploy to Azure Static Web App
+      - name: Deploy to Azure Static Web App
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ steps.get_token.outputs.DEPLOY_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "/"
+          output_location: "dist"
